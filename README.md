@@ -1,3 +1,3 @@
 # Install
 ### Env
-    PYTHONPATH = <install_path>\IDAToolsPlugin - to install in global scope
+    PYTHONPATH = <install_path>\IDA-Script-Framework - to install in global scope
