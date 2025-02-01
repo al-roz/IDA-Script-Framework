@@ -96,7 +96,7 @@ class InstructionItem(AbstructAPI.analyze.InstructionItem):
         return ida_bytes.is_code(self.start_addr)
 
     def make_instruction(self):
-        cur_head = ida_bytes.get_item_head()
+        cur_head = ida_bytes.get_item_head(self.start_addr)
         ida_bytes.del_items(cur_head)
         return ida_ua.create_insn(self.start_addr, None)
 
