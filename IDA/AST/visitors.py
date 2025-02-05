@@ -1,5 +1,6 @@
 import ida_hexrays
 import ida_lines
+import idaapi
 import idc
 import ida_pro
 
@@ -27,7 +28,7 @@ class VarItem:
         self.var = var
         self.var_ref: ida_hexrays.var_ref_t = self.var.v
 
-    def get_asg_node(self):
+    def get_asg_left(self):
         cfunc = ida_hexrays.decompile(self.var.ea)
         parent_exp: ida_hexrays.citem_t = cfunc.body.find_parent_of(self.var)
 
@@ -42,6 +43,17 @@ class VarItem:
             parent_exp = cfunc.body.find_parent_of(parent_exp)
 
         return None
+
+    def set_new_name(self, new_name):
+        c = ida_hexrays.decompile(self.var.ea)
+        old_name = self.var.x.v.getv().name
+        return ida_hexrays.rename_lvar(c.entry_ea, old_name, new_name)
+
+    def get_asg_right(self):
+        c = ida_hexrays.decompile()
+        parent : ida_hexrays.cexpr_t = c.body.find_parent_of(self.var)
+        while parent is not None:
+            print(parent.ea)
 
     def foo(self):
         return self.var.obj_id
@@ -78,6 +90,7 @@ class ASTCallItem:
     def __init__(self, expr: ida_hexrays.cexpr_t):
         self.expr: ida_hexrays.cexpr_t = expr
         self.func: ida_hexrays.cexpr_t = expr.x
+        self.cfunc = ida_hexrays.decompile(expr.ea)
 
         args: ida_hexrays.carglist_t = expr.a
         self.args: list[CallArgument] = []
@@ -101,6 +114,17 @@ class ASTCallItem:
 
     def get_args(self):
         return self.args
+
+    def get_asg_var(self):
+        expr_parent: ida_hexrays.cexpr_t = self.cfunc.body.find_parent_of(self.expr)
+
+        while expr_parent.op != idaapi.cot_asg:
+            expr_parent: ida_hexrays.cexpr_t = self.cfunc.body.find_parent_of(expr_parent)
+
+        if expr_parent.cexpr.x.op == idaapi.cot_var:
+            return VarItem(expr_parent.cexpr)
+
+        return None
 
 
 class ASTForItem:

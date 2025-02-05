@@ -1,4 +1,3 @@
-import ida_struct
 import ida_ida
 import idaapi
 

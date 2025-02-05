@@ -1,16 +1,5 @@
-import ida_lines
-import idaapi
-import idautils
 import idc
 
-import IDA.analyzer
-import ida_hexrays
-
-
-def decompile_all():
-    funcs = idautils.Functions()
-    for func in funcs:
-        IDA.analyzer.FunctionItem(func).get_decompile()
 
 
 def is_str(addr):
