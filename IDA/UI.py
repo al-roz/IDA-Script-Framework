@@ -70,6 +70,10 @@ class DialogItem:
         self.fields.append(field_name)
         self.controls[field_name] = ida_kernwin.Form.StringInput(swidth=50)
 
+    def add_numeric_input(self, field_name):
+        self.fields.append(field_name)
+        self.controls[field_name] = ida_kernwin.Form.NumericInput(swidth=50)
+
     def get_value(self, filed_name):
         return self.instance.__getattribute__(filed_name).value
 

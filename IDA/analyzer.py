@@ -44,6 +44,7 @@ class InstructionItem(AbstructAPI.analyze.InstructionItem):
         self.end_addr = self.start_addr + self.size
         self.mnem = idc.print_insn_mnem(addr)
         self.inst_bytes = []
+        self.original_bytes = []
 
         self.ops: list[OperandItem] = []
         self.ops_count = 0
@@ -56,6 +57,9 @@ class InstructionItem(AbstructAPI.analyze.InstructionItem):
 
         for i in range(self.size):
             self.inst_bytes.append(IDA.bytes.read_byte(self.start_addr + i))
+
+        for i in range(self.size):
+            self.original_bytes.append(ida_bytes.get_original_byte(self.start_addr + i))
 
     def get_op_value(self, op_number):
         if op_number >= self.ops_count:
@@ -85,6 +89,8 @@ class InstructionItem(AbstructAPI.analyze.InstructionItem):
 
     def nop_this_instruction(self):
         patcher.nop_range(self.start_addr, self.size)
+        for i in range(self.size):
+            ida_ua.create_insn(self.start_addr + i, None)
 
     def is_itype(self, itype):
         return self.insn_item.itype == itype
@@ -95,10 +101,20 @@ class InstructionItem(AbstructAPI.analyze.InstructionItem):
     def is_code(self):
         return ida_bytes.is_code(self.start_addr)
 
+    def set_cmt(self,cmt):
+        idaapi.set_cmt(self.start_addr, cmt, True)
+
+    def get_cmt(self):
+        return idaapi.get_cmt(self.start_addr,True)
+
     def make_instruction(self):
+        cmt = self.get_cmt()
         cur_head = ida_bytes.get_item_head(self.start_addr)
         ida_bytes.del_items(cur_head)
-        return ida_ua.create_insn(self.start_addr, None)
+        size = ida_ua.create_insn(self.start_addr, None)
+        if cmt is not None:
+            self.set_cmt(cmt)
+        return size
 
     def __str__(self):
         return (f'ADDR : {hex(self.start_addr)}\n'
@@ -249,6 +265,20 @@ class FunctionItem(AbstructAPI.analyze.FunctionItem):
                 if result is True:
                     break
         return result
+
+    def del_func(self):
+        ida_funcs.del_func(self.start_addr)
+
+    def set_func_end_addr(self, new_end_addr):
+        ida_funcs.set_func_end(self.start_addr, new_end_addr)
+
+    def append_func_tail(self, new_tail_start, new_tail_end):
+        res = ida_funcs.append_func_tail(self.func_item, new_tail_start,new_tail_end)
+        if res :
+            self.set_func_end_addr(new_tail_end)
+        return res
+
+
 
     def get_name(self):
         return idc.get_func_name(self.start_addr)
